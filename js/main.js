@@ -16,8 +16,15 @@ function closeMenu() {
   menuOverlay.classList.remove('open');
 }
 
-if (menuOpen) menuOpen.addEventListener('click', openMenu);
-if (menuClose) menuClose.addEventListener('click', closeMenu);
+if (menuOpen) {
+  menuOpen.addEventListener('click', () => {
+    if (mobileMenu.classList.contains('open')) {
+      closeMenu();
+    } else {
+      openMenu();
+    }
+  });
+}
 if (menuOverlay) menuOverlay.addEventListener('click', closeMenu);
 
 if (mobileMenu) {
