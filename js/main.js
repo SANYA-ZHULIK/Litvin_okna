@@ -92,11 +92,9 @@ const rangeH = document.getElementById('rangeH');
 if (rangeW) rangeW.addEventListener('input', calcUpdate);
 if (rangeH) rangeH.addEventListener('input', calcUpdate);
 
-// Дополнительная привязка для надёжности
 document.addEventListener('DOMContentLoaded', function() {
   calcUpdate();
   
-  // На случай, если onclick не сработает
   const allToggleBtns = document.querySelectorAll('.toggle-btn');
   allToggleBtns.forEach(btn => {
     if (!btn.hasAttribute('data-bound')) {
@@ -111,66 +109,125 @@ document.addEventListener('DOMContentLoaded', function() {
   });
 });
 
-// Конфигурация Telegram бота
-// Замените на свои данные: chat_id и token вашего бота
+// ============================
+// КОНФИГУРАЦИЯ
+// ============================
 const TELEGRAM_CONFIG = {
   botToken: '8990574523:AAFcYLamJ3RSqSZb_eYOPkOYUmxCe6lpkVg',
-  chatId: '1117178124',
-  sendMessageUrl: 'https://api.telegram.org/bot{token}/sendMessage'
+  chatId: '1117178124'
 };
 
+const GOOGLE_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbywsc0r7Y9v8KvHYd6GEubJyhr7-is0SDu7lXpwu2L4VNk2UdJYd_s3cGbNlwj0FpqX/exec';
+
 // ============================
-// ОТПРАВКА ЗАЯВКИ В TELEGRAM
+// ОТПРАВКА В TELEGRAM
 // ============================
 async function sendToTelegram(formData) {
   const url = `https://api.telegram.org/bot${TELEGRAM_CONFIG.botToken}/sendMessage`;
   
+  // Получаем дату и время отдельно
+  const now = new Date();
+  const date = now.toLocaleDateString('ru-RU', {
+    day: '2-digit',
+    month: '2-digit',
+    year: 'numeric'
+  });
+  const time = now.toLocaleTimeString('ru-RU', {
+    hour: '2-digit',
+    minute: '2-digit',
+    second: '2-digit'
+  });
+  
+  // Используем Markdown для жирного текста
   const text = [
-    'Новая заявка с сайта',
+    '*НОВАЯ ЗАЯВКА С САЙТА*',
     '',
     `Имя: ${formData.name}`,
     `Телефон: ${formData.phone}`,
     formData.address ? `Адрес: ${formData.address}` : '',
     formData.message ? `Комментарий: ${formData.message}` : '',
     '',
-    `Время: ${new Date().toLocaleString('ru-RU')}`
+    `Дата: ${date}`,
+    `Время: ${time}`
   ].filter(Boolean).join('\n');
 
   try {
     const response = await fetch(url, {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
+      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         chat_id: TELEGRAM_CONFIG.chatId,
-        text: text
+        text: text,
+        parse_mode: 'Markdown'  // Включаем Markdown форматирование
       })
     });
 
     const data = await response.json();
-    console.log('Telegram API ответ:', {
-      status: response.status,
-      ok: data.ok,
-      description: data.description,
-      full: data
+    console.log('Telegram:', data.ok ? '✅' : '❌', data);
+    
+    return { ok: data.ok === true || data.ok === 1 || data.message_id };
+  } catch (error) {
+    console.error('Telegram error:', error);
+    return { ok: false };
+  }
+}
+
+
+// ============================
+// ОТПРАВКА В GOOGLE ТАБЛИЦУ
+// ============================
+async function sendToGoogleSheet(formData) {
+  try {
+    // Получаем текущую дату и время отдельно
+    const now = new Date();
+    const date = now.toLocaleDateString('ru-RU', {
+      day: '2-digit',
+      month: '2-digit',
+      year: 'numeric'
+    });
+    const time = now.toLocaleTimeString('ru-RU', {
+      hour: '2-digit',
+      minute: '2-digit',
+      second: '2-digit'
     });
     
-    return {
-      ok: data.ok === true || data.ok === 1 || String(data.ok) === 'true' || data.message_id,
-      raw: data
-    };
+    const response = await fetch(GOOGLE_SCRIPT_URL, {
+      method: 'POST',
+      mode: 'no-cors',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        name: formData.name,
+        phone: formData.phone,
+        address: formData.address || '',
+        message: formData.message || '',
+        date: date,      // Добавляем дату
+        time: time       // Добавляем время
+      })
+    });
+    console.log('✅ Отправлено в Google Таблицу');
+    return { ok: true };
   } catch (error) {
-    console.error('Ошибка сети при отправке в Telegram:', error);
-    return {
-      ok: false,
-      raw: { error: error.message }
-    };
+    console.error('❌ Google Таблица ошибка:', error);
+    return { ok: false };
   }
 }
 
 // ============================
-// ФОРМА В ГЕРОЕ (если есть)
+// ОБЩАЯ ОТПРАВКА
+// ============================
+async function sendOrder(formData) {
+  const results = {
+    telegram: await sendToTelegram(formData),
+    google: await sendToGoogleSheet(formData)
+  };
+  
+  console.log('📦 Результаты отправки:', results);
+  
+  return results.telegram.ok || results.google.ok;
+}
+
+// ============================
+// ФОРМА В ГЕРОЕ
 // ============================
 const heroForm = document.getElementById('heroForm');
 
@@ -191,16 +248,15 @@ if (heroForm) {
     setButtonLoading(submitBtn, true);
     
     try {
-      const result = await sendToTelegram({ name, phone, address });
-      if (result.ok) {
+      const ok = await sendOrder({ name, phone, address });
+      if (ok) {
         showNotification('Спасибо! Я свяжусь с вами в ближайшее время.', 'success');
         heroForm.reset();
       } else {
-        console.error('Telegram API error:', result.raw);
-        throw new Error(result.raw.description || 'Не удалось отправить');
+        throw new Error('Ошибка отправки');
       }
     } catch (error) {
-      console.error('Form submission error:', error);
+      console.error('Form error:', error);
       showNotification('Произошла ошибка. Позвоните по номеру +7 (999) 123-45-67', 'error');
     } finally {
       setButtonLoading(submitBtn, false);
@@ -212,7 +268,6 @@ if (heroForm) {
 // ОСНОВНАЯ ФОРМА ЗАЯВОК
 // ============================
 const leadForm = document.getElementById('leadForm');
-const successMessage = document.getElementById('formSuccess');
 
 if (leadForm) {
   leadForm.addEventListener('submit', async (e) => {
@@ -232,16 +287,15 @@ if (leadForm) {
     setButtonLoading(submitBtn, true);
     
     try {
-      const result = await sendToTelegram({ name, phone, address, message });
-      if (result.ok) {
+      const ok = await sendOrder({ name, phone, address, message });
+      if (ok) {
         showNotification('Спасибо! Я свяжусь с вами в ближайшее время.', 'success');
         leadForm.reset();
       } else {
-        console.error('Telegram API error:', result.raw);
-        throw new Error(result.raw.description || 'Не удалось отправить');
+        throw new Error('Ошибка отправки');
       }
     } catch (error) {
-      console.error('Form submission error:', error);
+      console.error('Form error:', error);
       showNotification('Произошла ошибка. Позвоните по номеру +7 (999) 123-45-67', 'error');
     } finally {
       setButtonLoading(submitBtn, false);
@@ -252,8 +306,13 @@ if (leadForm) {
 function setButtonLoading(btn, isLoading) {
   if (!btn) return;
   btn.disabled = isLoading;
-  btn.dataset.originalText = btn.textContent;
-  btn.textContent = isLoading ? 'Отправка...' : btn.dataset.originalText;
+  
+  // Сохраняем оригинальный текст только если он еще не сохранен
+  if (!btn.dataset.originalText) {
+    btn.dataset.originalText = btn.textContent;
+  }
+  
+  btn.textContent = isLoading ? 'Отправка...' : (btn.dataset.originalText || 'Отправить');
 }
 
 function showNotification(message, type = 'success') {
@@ -277,24 +336,15 @@ function showNotification(message, type = 'success') {
     font-size: 0.9rem;
     font-weight: 600;
     animation: slideIn 0.3s ease;
+    background: ${type === 'success' ? 'rgba(197, 227, 132, 0.15)' : 'rgba(248, 61, 61, 0.15)'};
+    color: ${type === 'success' ? '#c5e384' : '#F83D3D'};
+    border: 1px solid ${type === 'success' ? 'rgba(197, 227, 132, 0.3)' : 'rgba(248, 61, 61, 0.3)'};
   `;
   
-  if (type === 'success') {
-    notification.style.cssText += `
-      background: rgba(197, 227, 132, 0.15);
-      color: #c5e384;
-      border: 1px solid rgba(197, 227, 132, 0.3);
-    `;
-  } else {
-    notification.style.cssText += `
-      background: rgba(248, 61, 61, 0.15);
-      color: #F83D3D;
-      border: 1px solid rgba(248, 61, 61, 0.3);
-    `;
-  }
-  
   const formSection = document.getElementById('form-section');
-  formSection.querySelector('.form-container').appendChild(notification);
+  if (formSection) {
+    formSection.querySelector('.form-container').appendChild(notification);
+  }
   
   setTimeout(() => {
     notification.style.opacity = '0';
@@ -303,16 +353,6 @@ function showNotification(message, type = 'success') {
     setTimeout(() => notification.remove(), 300);
   }, 5000);
 }
-
-// Добавить стили для анимации
-const style = document.createElement('style');
-style.textContent = `
-  @keyframes slideIn {
-    from { opacity: 0; transform: translateY(-10px); }
-    to { opacity: 1; transform: translateY(0); }
-  }
-`;
-document.head.appendChild(style);
 
 // ============================
 // ПРОКРУТКА К ФОРМЕ
@@ -336,7 +376,7 @@ window.addEventListener('scroll', () => {
 });
 
 // ============================
-// ПРОЗРАЧНАЯ ШАПКА ПРИ СКРОЛЛЕ
+// ПРОЗРАЧНАЯ ШАПКА
 // ============================
 const header = document.getElementById('header');
 
@@ -359,3 +399,106 @@ window.addEventListener('load', function() {
     }, 800);
   }
 });
+
+// ============================
+// ОТЗЫВЫ
+// ============================
+const REVIEWS = [
+  {
+    initials: 'АК',
+    author: 'Анна К.',
+    date: 'Митино, июнь 2025',
+    stars: 5,
+    text: 'Поставили три окна за один день. Замерили быстро, цена совпала с предварительным расчётом. Никаких скрытых платежей, всё чётко.'
+  },
+  {
+    initials: 'ДМ',
+    author: 'Дмитрий М.',
+    date: 'Химки, май 2025',
+    stars: 5,
+    text: 'Остеклили лоджию тёплым вариантом. Теперь это полноценная комната, не дует даже зимой. Работают аккуратно, убрали за собой.'
+  },
+  {
+    initials: 'ЕС',
+    author: 'Елена С.',
+    date: 'Зеленоград, апрель 2025',
+    stars: 5,
+    text: 'Заказала натяжной потолок с подсветкой. Мастер приехал в удобное время, монтаж занял 4 часа. Выглядит очень современно.'
+  },
+  {
+    initials: 'ИП',
+    author: 'Игорь П.',
+    date: 'Куркино, март 2025',
+    stars: 5,
+    text: 'Делали балкон под ключ — вынос, утепление, остекление. Сроки держали, качество отличное. Рекомендую.'
+  },
+  {
+    initials: 'МН',
+    author: 'Марина Н.',
+    date: 'Строгино, февраль 2025',
+    stars: 5,
+    text: 'Заменили все окна в квартире. Старые рамы вынесли, новые поставили, остатки убрали. Очень довольна результатом.'
+  },
+  {
+    initials: 'СВ',
+    author: 'Сергей В.',
+    date: 'Москва, январь 2025',
+    stars: 5,
+    text: 'Гарантия 5 лет — это звучит уверенно. Окна стоят уже полгода, проблем нет. Зимой стало значительно теплее.'
+  }
+];
+
+function getRandomReviews(count) {
+  const shuffled = [...REVIEWS].sort(() => Math.random() - 0.5);
+  return shuffled.slice(0, count);
+}
+
+function renderReviews(reviews) {
+  const grid = document.getElementById('reviewsGrid');
+  if (!grid) return;
+
+  grid.style.opacity = '0';
+  grid.style.transform = 'translateY(12px)';
+  grid.style.transition = 'opacity 0.3s ease, transform 0.3s ease';
+
+  setTimeout(() => {
+    grid.innerHTML = reviews.map(r => `
+      <div class="review-card">
+        <div class="review-header">
+          <div class="review-avatar">${r.initials}</div>
+          <div class="review-meta">
+            <div class="review-author">${r.author}</div>
+            <div class="review-date">${r.date}</div>
+          </div>
+        </div>
+        <div class="review-stars">${'★'.repeat(r.stars)}${'☆'.repeat(5 - r.stars)}</div>
+        <p class="review-text">${r.text}</p>
+      </div>
+    `).join('');
+
+    grid.style.opacity = '1';
+    grid.style.transform = 'translateY(0)';
+  }, 300);
+}
+
+function shuffleReviews() {
+  const reviews = getRandomReviews(3);
+  renderReviews(reviews);
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+  shuffleReviews();
+  setInterval(shuffleReviews, 5000);
+});
+
+// ============================
+// СТИЛИ ДЛЯ УВЕДОМЛЕНИЙ
+// ============================
+const styleEl = document.createElement('style');
+styleEl.textContent = `
+  @keyframes slideIn {
+    from { opacity: 0; transform: translateY(-10px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+`;
+document.head.appendChild(styleEl);
