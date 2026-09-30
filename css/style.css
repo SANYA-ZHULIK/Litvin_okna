@@ -380,24 +380,6 @@ section {
   padding: 40px;
 }
 
-/* оконный рисунок в главной карточке */
-.service-card.featured::before {
-  content: '';
-  position: absolute;
-  top: 36px;
-  right: 36px;
-  width: 42%;
-  max-width: 190px;
-  aspect-ratio: 4 / 5;
-  border: 3px solid rgba(197,227,132,0.6);
-  border-radius: 14px;
-  background:
-    linear-gradient(rgba(197,227,132,0.45), rgba(197,227,132,0.45)) center / 3px 100% no-repeat,
-    linear-gradient(rgba(197,227,132,0.45), rgba(197,227,132,0.45)) center / 100% 3px no-repeat,
-    linear-gradient(120deg, rgba(197,227,132,0.28) 0%, transparent 45%);
-  box-shadow: 0 0 60px rgba(197,227,132,0.18);
-}
-
 .service-card.featured::after {
   content: '';
   position: absolute;
@@ -476,8 +458,8 @@ section {
 .service-card.featured .service-num { display: none; }
 
 @media (max-width: 900px) {
-  .services-grid { grid-template-columns: 1fr 1fr; }
-  .service-card.featured { grid-row: span 1; min-height: 240px; }
+  .services-grid { grid-template-columns: 1fr 1fr; margin-top: 36px; }
+  .service-card.featured { grid-row: auto; grid-column: 1 / -1; min-height: 0; padding: 28px; }
 }
 
 @media (max-width: 560px) {
@@ -485,7 +467,27 @@ section {
   .hero-text p { font-size: 0.95rem; }
   .hero-btns .btn-primary,
   .hero-btns .btn-secondary { padding: 14px 20px; font-size: 0.9rem; }
-  .services-grid { grid-template-columns: 1fr; }
+  .services-grid { grid-template-columns: 1fr; gap: 10px; }
+  .service-card:not(.featured) {
+    display: grid;
+    grid-template-columns: 44px 1fr;
+    column-gap: 14px;
+    align-items: center;
+    padding: 14px 16px;
+    border-radius: 18px;
+  }
+  .service-card:not(.featured) .service-icon {
+    grid-row: 1 / span 2;
+    width: 44px;
+    height: 44px;
+    margin: 0;
+    font-size: 1.05rem;
+  }
+  .service-card:not(.featured) .service-name { font-size: 1rem; margin: 0; }
+  .service-card:not(.featured) .service-desc { font-size: 0.82rem; line-height: 1.4; }
+  .service-card:not(.featured) .service-num { display: none; }
+  .service-card.featured { padding: 22px; }
+  .service-card.featured .service-name { font-size: 1.3rem; }
   .portfolio-slider { grid-template-columns: 1fr; }
 }
 
