@@ -254,7 +254,7 @@ if (leadForm) {
     try {
       const ok = await sendOrder({ name, phone, address, message });
       if (ok) {
-        showNotification('Спасибо! Я свяжусь с вами в ближайшее время.', 'success');
+        showNotification('Спасибо! С вами свяжуться в ближайшее время.', 'success');
         leadForm.reset();
         setTimeout(() => closeLeadModal(), 2500);
       } else {
