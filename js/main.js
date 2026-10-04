@@ -425,3 +425,176 @@ document.addEventListener('DOMContentLoaded', function() {
   // Затем каждые 5 секунд следующие 3
   setInterval(showNextReviews, reviewsInterval);
 });
+
+// ============================
+// ГАЛЕРЕЯ РАБОТ: у каждой работы несколько фото
+// ============================
+(function () {
+  const cards = Array.from(document.querySelectorAll('.work-card'));
+  const lb = document.getElementById('lightbox');
+  if (!cards.length || !lb) return;
+
+  const img = lb.querySelector('.lightbox-img');
+  const counter = lb.querySelector('.lightbox-counter');
+  const captionEl = lb.querySelector('.lightbox-caption');
+  const thumbsEl = lb.querySelector('.lightbox-thumbs');
+  const btnClose = lb.querySelector('.lightbox-close');
+  const btnPrev = lb.querySelector('.lightbox-prev');
+  const btnNext = lb.querySelector('.lightbox-next');
+
+  let photos = [];   // фото открытой работы
+  let current = 0;
+  let activeCard = null;
+
+  // Список фото работы: обложка + data-photos.
+  // Имена без папки (например, "rehau_803.jpg") берутся из той же папки, что и обложка.
+  // Обложку не обязательно дублировать в data-photos: она всегда идёт первой.
+  function getPhotos(card) {
+    const cover = card.querySelector('img');
+    const coverSrc = cover ? (cover.getAttribute('src') || '') : '';
+    const dir = coverSrc.includes('/') ? coverSrc.slice(0, coverSrc.lastIndexOf('/') + 1) : '';
+    const list = (card.dataset.photos || '')
+      .split(',')
+      .map((s) => s.trim())
+      .filter(Boolean)
+      .map((s) => (s.includes('/') ? s : dir + s));
+    if (coverSrc) list.unshift(coverSrc);
+    return Array.from(new Set(list));
+  }
+
+  // проверяем, что файл есть: несуществующие фото в просмотр не попадут
+  function probe(src) {
+    return new Promise((resolve) => {
+      const test = new Image();
+      test.onload = () => resolve(src);
+      test.onerror = () => {
+        console.warn('Фото не найдено (проверьте путь и регистр имени):', test.src);
+        resolve(null);
+      };
+      test.src = src;
+    });
+  }
+
+  // обложки без файла = заготовки; на карточках с несколькими фото показываем значок «N»
+  function markNoPhoto(card) {
+    card.classList.add('no-photo');
+    const cover = card.querySelector('img');
+    if (cover) cover.style.display = 'none';
+    const badge = card.querySelector('.work-count');
+    if (badge) badge.remove();
+  }
+
+  // Обложка не загрузилась: пробуем следующие фото этой работы, и если ни одного нет, показываем заготовку
+  async function recoverCover(card, cover) {
+    const failed = cover.getAttribute('src');
+    for (const src of getPhotos(card).filter((s) => s !== failed)) {
+      if (await probe(src)) { cover.src = src; return; }
+    }
+    markNoPhoto(card);
+  }
+
+  cards.forEach((card) => {
+    const cover = card.querySelector('img');
+    if (!cover) return markNoPhoto(card);
+
+    cover.addEventListener('error', () => {
+      console.warn('Обложка не найдена (проверьте путь и регистр имени):', cover.src);
+      recoverCover(card, cover);
+    });
+    if (cover.complete && cover.naturalWidth === 0 && cover.getAttribute('src')) recoverCover(card, cover);
+
+    // значок с количеством фото (по списку в HTML)
+    const count = getPhotos(card).length;
+    if (count > 1) {
+      const badge = document.createElement('span');
+      badge.className = 'work-count';
+      badge.innerHTML = '<i class="fa fa-images"></i> ' + count;
+      badge.setAttribute('aria-label', count + ' фото');
+      card.appendChild(badge);
+    }
+  });
+
+  function show(i) {
+    if (!photos.length) return;
+    current = (i + photos.length) % photos.length;
+    img.src = photos[current];
+    const title = activeCard.querySelector('.work-title');
+    img.alt = (title ? title.textContent : 'Фото работы') + ', фото ' + (current + 1);
+    counter.textContent = photos.length > 1 ? (current + 1) + ' / ' + photos.length : '';
+    btnPrev.hidden = btnNext.hidden = photos.length < 2;
+
+    Array.from(thumbsEl.children).forEach((t, idx) => {
+      t.classList.toggle('active', idx === current);
+      if (idx === current) t.scrollIntoView({ block: 'nearest', inline: 'center' });
+    });
+  }
+
+  function buildCaption(card) {
+    captionEl.replaceChildren();
+    const cap = card.querySelector('.work-caption');
+    if (cap) Array.from(cap.children).forEach((n) => captionEl.appendChild(n.cloneNode(true)));
+  }
+
+  function buildThumbs() {
+    thumbsEl.replaceChildren();
+    if (photos.length < 2) return;
+    photos.forEach((src, idx) => {
+      const b = document.createElement('button');
+      b.type = 'button';
+      b.className = 'lightbox-thumb';
+      b.setAttribute('aria-label', 'Фото ' + (idx + 1));
+      const t = document.createElement('img');
+      t.src = src;
+      t.alt = '';
+      b.appendChild(t);
+      b.addEventListener('click', (e) => { e.stopPropagation(); show(idx); });
+      thumbsEl.appendChild(b);
+    });
+  }
+
+  async function openWork(card) {
+    const found = await Promise.all(getPhotos(card).map(probe));
+    photos = found.filter(Boolean);
+    if (!photos.length) return;
+    activeCard = card;
+    buildCaption(card);
+    buildThumbs();
+    lb.classList.add('open');
+    lb.setAttribute('aria-hidden', 'false');
+    document.body.classList.add('lightbox-open');
+    show(0);
+    btnClose.focus();
+  }
+
+  function closeLb() {
+    lb.classList.remove('open');
+    lb.setAttribute('aria-hidden', 'true');
+    document.body.classList.remove('lightbox-open');
+  }
+
+  cards.forEach((card) => card.addEventListener('click', () => {
+    if (card.classList.contains('no-photo')) return;
+    openWork(card);
+  }));
+  btnClose.addEventListener('click', closeLb);
+  btnPrev.addEventListener('click', (e) => { e.stopPropagation(); show(current - 1); });
+  btnNext.addEventListener('click', (e) => { e.stopPropagation(); show(current + 1); });
+  lb.addEventListener('click', (e) => { if (e.target === lb) closeLb(); });
+
+  document.addEventListener('keydown', (e) => {
+    if (!lb.classList.contains('open')) return;
+    if (e.key === 'Escape') closeLb();
+    if (e.key === 'ArrowLeft') show(current - 1);
+    if (e.key === 'ArrowRight') show(current + 1);
+  });
+
+  // свайп на телефоне
+  let startX = null;
+  lb.addEventListener('touchstart', (e) => { startX = e.touches[0].clientX; }, { passive: true });
+  lb.addEventListener('touchend', (e) => {
+    if (startX === null) return;
+    const dx = e.changedTouches[0].clientX - startX;
+    startX = null;
+    if (Math.abs(dx) > 50) show(current + (dx < 0 ? 1 : -1));
+  });
+})();

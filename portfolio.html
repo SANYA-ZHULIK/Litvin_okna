@@ -84,29 +84,57 @@
   <main class="standalone-main">
 <section id="portfolio">
     <div class="section-inner">
-      <h2 class="section-title reveal">До и после — смотрите разницу</h2>
-      <div class="portfolio-slider">
-        <div class="portfolio-item">
-          <div class="before-after">
-            <div class="ba-side"><div class="ph-before"></div><span class="ba-label before">До</span></div>
-            <div class="ba-side"><div class="ph-after"></div><span class="ba-label after">После</span></div>
-          </div>
-          <div class="portfolio-info"><strong>Монтаж 3 окон</strong><span>Митино, 2024 г.</span></div>
-        </div>
-        <div class="portfolio-item">
-          <div class="before-after">
-            <div class="ba-side"><div class="ph-before" style="background:linear-gradient(135deg,#B8A898,#9A8870);"></div><span class="ba-label before">До</span></div>
-            <div class="ba-side"><div class="ph-after" style="background:linear-gradient(135deg,#c5e384,#a8c46a);"></div><span class="ba-label after">После</span></div>
-          </div>
-          <div class="portfolio-info"><strong>Балконное остекление</strong><span>Химки, 2025 г.</span></div>
-        </div>
-        <div class="portfolio-item">
-          <div class="before-after">
-            <div class="ba-side"><div class="ph-before" style="background:linear-gradient(135deg,#C8B8A0,#A89878);"></div><span class="ba-label before">До</span></div>
-            <div class="ba-side"><div class="ph-after" style="background:linear-gradient(135deg,#c5e384,#a8c46a);"></div><span class="ba-label after">После</span></div>
-          </div>
-          <div class="portfolio-info"><strong>Замена 5 окон в квартире</strong><span>Зеленоград, 2025 г.</span></div>
-        </div>
+      <h2 class="section-title reveal">Примеры наших работ</h2>
+      <div class="works-grid">
+        <!--
+          Одна карточка = одна работа.
+          data-photos: все фото работы через запятую с полными путями и ТОЧНЫМИ расширениями (.png / .jpg).
+          Обложка карточки = <img src="...">, она же показывается первой в просмотре.
+          Замените «Название работы», «Район» и «Срок выполнения» на свои.
+        -->
+        <button type="button" class="work-card reveal" data-photos="works/mobile/rehau_intelio_1.png, works/mobile/rehau_intelio_2.png, works/mobile/rehau_intelio_3.png" aria-label="Открыть фото работы 1">
+          <img src="works/mobile/rehau_intelio_1.png" alt="Фото работы 1" loading="lazy">
+          <span class="work-caption">
+            <strong class="work-title">Остекление квартиры в круг</strong>
+            <span class="work-meta">
+              <span>Rehau Intelio 80, январь 2024</span>
+            </span>
+          </span>
+          <span class="work-zoom"><i class="fa fa-expand"></i></span>
+        </button>
+        <button type="button" class="work-card reveal" data-photos="works/mobile/rehau_801.jpg, works/mobile/rehau_802.png, works/mobile/rehau_803.png, works/mobile/rehau_804.png" aria-label="Открыть фото работы 2">
+          <img src="works/mobile/rehau_801.jpg" alt="Фото работы 2" loading="lazy">
+          <span class="work-caption">
+            <strong class="work-title">Название работы</strong>
+            <span class="work-meta">
+              <span><i class="fa fa-location-dot"></i> Район</span>
+              <span><i class="fa fa-clock"></i> Срок выполнения</span>
+            </span>
+          </span>
+          <span class="work-zoom"><i class="fa fa-expand"></i></span>
+        </button>
+        <button type="button" class="work-card reveal" data-photos="works/mobile/rehau_grazino_1.png, works/mobile/rehau_grazino_2.png, works/mobile/rehau_grazino_3.png" aria-label="Открыть фото работы 3">
+          <img src="works/mobile/rehau_grazino_1.png" alt="Фото работы 3" loading="lazy">
+          <span class="work-caption">
+            <strong class="work-title">Название работы</strong>
+            <span class="work-meta">
+              <span><i class="fa fa-location-dot"></i> Район</span>
+              <span><i class="fa fa-clock"></i> Срок выполнения</span>
+            </span>
+          </span>
+          <span class="work-zoom"><i class="fa fa-expand"></i></span>
+        </button>
+        <button type="button" class="work-card reveal" data-photos="works/desktop/house_1.png, works/desktop/house_2.png, works/desktop/house_3.png" aria-label="Открыть фото работы 4">
+          <img src="works/desktop/house_1.png" alt="Фото работы 4" loading="lazy">
+          <span class="work-caption">
+            <strong class="work-title">Название работы</strong>
+            <span class="work-meta">
+              <span><i class="fa fa-location-dot"></i> Район</span>
+              <span><i class="fa fa-clock"></i> Срок выполнения</span>
+            </span>
+          </span>
+          <span class="work-zoom"><i class="fa fa-expand"></i></span>
+        </button>
       </div>
     </div>
   </section>
@@ -176,7 +204,16 @@
     </div>
   </div>
 
-  <script src="js/main.js"></script>
+  <!-- Просмотр фото работ -->
+  <div class="lightbox" id="lightbox" aria-hidden="true" role="dialog" aria-modal="true" aria-label="Просмотр фото">
+    <button class="lightbox-close" aria-label="Закрыть"><i class="fa fa-times"></i></button>
+    <button class="lightbox-nav lightbox-prev" aria-label="Предыдущее фото"><i class="fa fa-chevron-left"></i></button>
+    <img class="lightbox-img" src="" alt="">
+    <div class="lightbox-caption"></div>
+    <div class="lightbox-thumbs"></div>
+    <button class="lightbox-nav lightbox-next" aria-label="Следующее фото"><i class="fa fa-chevron-right"></i></button>
+    <div class="lightbox-counter"></div>
+  </div>
 
   <script src="js/main.js"></script>
 </body>
