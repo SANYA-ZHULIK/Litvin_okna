@@ -445,6 +445,11 @@ document.addEventListener('DOMContentLoaded', function() {
   let photos = [];   // фото открытой работы
   let current = 0;
   let activeCard = null;
+  let animating = false;
+
+  const reduceMotion = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const wait = (ms) => new Promise((r) => setTimeout(r, ms));
+  const wrap = (i) => (i + photos.length) % photos.length;
 
   // Список фото работы: обложка + data-photos.
   // Имена без папки (например, "rehau_803.jpg") берутся из той же папки, что и обложка.
@@ -475,7 +480,7 @@ document.addEventListener('DOMContentLoaded', function() {
     });
   }
 
-  // обложки без файла = заготовки; на карточках с несколькими фото показываем значок «N»
+  // обложки без файла = заготовки
   function markNoPhoto(card) {
     card.classList.add('no-photo');
     const cover = card.querySelector('img');
@@ -514,9 +519,19 @@ document.addEventListener('DOMContentLoaded', function() {
     }
   });
 
+  // ---------- положение и анимация фото ----------
+  function setImg(x, opacity, animate) {
+    img.style.transition = animate
+      ? 'transform 0.26s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.26s ease'
+      : 'none';
+    img.style.transform = 'translate3d(' + x + 'px, 0, 0)';
+    img.style.opacity = opacity;
+  }
+
+  // просто показать фото с номером i (без анимации)
   function show(i) {
     if (!photos.length) return;
-    current = (i + photos.length) % photos.length;
+    current = wrap(i);
     img.src = photos[current];
     const title = activeCard.querySelector('.work-title');
     img.alt = (title ? title.textContent : 'Фото работы') + ', фото ' + (current + 1);
@@ -528,6 +543,30 @@ document.addEventListener('DOMContentLoaded', function() {
       if (idx === current) t.scrollIntoView({ block: 'nearest', inline: 'center' });
     });
   }
+
+  // листание с анимацией: dir = 1 (дальше, фото уезжает влево) или -1 (назад)
+  async function slideTo(index, dir) {
+    if (animating || photos.length < 2) return;
+    if (reduceMotion) { show(index); return; }
+    animating = true;
+    const shift = window.innerWidth * 0.45;
+
+    setImg(-dir * shift, 0, true);            // 1. текущее фото уезжает и гаснет
+    await wait(240);
+    if (!lb.classList.contains('open')) { animating = false; return; }
+
+    show(index);                               // 2. меняем фото
+    try { await img.decode(); } catch (e) {}
+    setImg(dir * shift, 0, false);             //    ставим его с противоположной стороны
+    img.getBoundingClientRect();               //    (чтобы браузер применил позицию без анимации)
+
+    setImg(0, 1, true);                        // 3. новое фото выезжает на место
+    await wait(260);
+    animating = false;
+  }
+
+  const goNext = () => slideTo(current + 1, 1);
+  const goPrev = () => slideTo(current - 1, -1);
 
   function buildCaption(card) {
     captionEl.replaceChildren();
@@ -547,7 +586,10 @@ document.addEventListener('DOMContentLoaded', function() {
       t.src = src;
       t.alt = '';
       b.appendChild(t);
-      b.addEventListener('click', (e) => { e.stopPropagation(); show(idx); });
+      b.addEventListener('click', (e) => {
+        e.stopPropagation();
+        if (idx !== current) slideTo(idx, idx > current ? 1 : -1);
+      });
       thumbsEl.appendChild(b);
     });
   }
@@ -557,6 +599,8 @@ document.addEventListener('DOMContentLoaded', function() {
     photos = found.filter(Boolean);
     if (!photos.length) return;
     activeCard = card;
+    animating = false;
+    setImg(0, 1, false);
     buildCaption(card);
     buildThumbs();
     lb.classList.add('open');
@@ -570,6 +614,7 @@ document.addEventListener('DOMContentLoaded', function() {
     lb.classList.remove('open');
     lb.setAttribute('aria-hidden', 'true');
     document.body.classList.remove('lightbox-open');
+    animating = false;
   }
 
   cards.forEach((card) => card.addEventListener('click', () => {
@@ -577,24 +622,54 @@ document.addEventListener('DOMContentLoaded', function() {
     openWork(card);
   }));
   btnClose.addEventListener('click', closeLb);
-  btnPrev.addEventListener('click', (e) => { e.stopPropagation(); show(current - 1); });
-  btnNext.addEventListener('click', (e) => { e.stopPropagation(); show(current + 1); });
+  btnPrev.addEventListener('click', (e) => { e.stopPropagation(); goPrev(); });
+  btnNext.addEventListener('click', (e) => { e.stopPropagation(); goNext(); });
   lb.addEventListener('click', (e) => { if (e.target === lb) closeLb(); });
 
   document.addEventListener('keydown', (e) => {
     if (!lb.classList.contains('open')) return;
     if (e.key === 'Escape') closeLb();
-    if (e.key === 'ArrowLeft') show(current - 1);
-    if (e.key === 'ArrowRight') show(current + 1);
+    if (e.key === 'ArrowLeft') goPrev();
+    if (e.key === 'ArrowRight') goNext();
   });
 
-  // свайп на телефоне
-  let startX = null;
-  lb.addEventListener('touchstart', (e) => { startX = e.touches[0].clientX; }, { passive: true });
-  lb.addEventListener('touchend', (e) => {
-    if (startX === null) return;
-    const dx = e.changedTouches[0].clientX - startX;
+  // ---------- свайп: фото едет за пальцем ----------
+  let startX = null, startY = 0, dragX = 0, axis = null;
+
+  lb.addEventListener('touchstart', (e) => {
     startX = null;
-    if (Math.abs(dx) > 50) show(current + (dx < 0 ? 1 : -1));
-  });
+    if (animating || e.touches.length > 1) return;
+    // полоску миниатюр и кнопки не считаем свайпом по фото
+    if (e.target.closest('.lightbox-thumbs, .lightbox-nav, .lightbox-close')) return;
+    startX = e.touches[0].clientX;
+    startY = e.touches[0].clientY;
+    dragX = 0;
+    axis = null;
+  }, { passive: true });
+
+  lb.addEventListener('touchmove', (e) => {
+    if (startX === null) return;
+    const dx = e.touches[0].clientX - startX;
+    const dy = e.touches[0].clientY - startY;
+    if (axis === null && (Math.abs(dx) > 8 || Math.abs(dy) > 8)) axis = Math.abs(dx) > Math.abs(dy) ? 'x' : 'y';
+    if (axis !== 'x') return;
+    dragX = photos.length > 1 ? dx : dx * 0.25;   // если фото одно, фото лишь слегка «пружинит»
+    const fade = 1 - Math.min(Math.abs(dragX) / (window.innerWidth * 0.9), 0.45);
+    setImg(dragX, fade, false);
+  }, { passive: true });
+
+  function endSwipe() {
+    if (startX === null) return;
+    const dx = dragX, wasHorizontal = axis === 'x';
+    startX = null; axis = null; dragX = 0;
+    if (!wasHorizontal) return;
+    const threshold = Math.min(70, window.innerWidth * 0.18);
+    if (photos.length > 1 && Math.abs(dx) > threshold) {
+      slideTo(current + (dx < 0 ? 1 : -1), dx < 0 ? 1 : -1);
+    } else {
+      setImg(0, 1, true);                         // не дотянули: возвращаем на место
+    }
+  }
+  lb.addEventListener('touchend', endSwipe);
+  lb.addEventListener('touchcancel', endSwipe);
 })();
