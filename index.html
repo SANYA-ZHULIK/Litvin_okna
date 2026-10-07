@@ -103,20 +103,20 @@
           <div class="service-icon"><i class="fa fa-window-restore"></i></div>
           <div>
             <div class="service-name">Монтаж пластиковых окон</div>
-            <div class="service-desc">Замеряем, привозим, ставим. Всё по ГОСТу, с уплотнением.</div>
+            <div class="service-desc">Замеряем, привозим, ставим. Всё по ГОСТу.</div>
           </div>
           <div class="service-num">01</div>
         </div>
         <div class="service-card reveal" data-photo="remont">
           <div class="service-icon"><i class="fa fa-screwdriver-wrench"></i></div>
           <div class="service-name">Ремонт и регулировка</div>
-          <div class="service-desc">Продует, не закрывается? Приедем и починим.</div>
+          <div class="service-desc">Продувает, не закрывается? Приедем и починим.</div>
           <div class="service-num">02</div>
         </div>
         <div class="service-card reveal" data-photo="balkon">
           <div class="service-icon"><i class="fa fa-building"></i></div>
           <div class="service-name">Балконное остекление</div>
-          <div class="service-desc">Холодное и тёплое остекление балконов.</div>
+          <div class="service-desc">Холодное и тёплое остекление балконов и лоджий.</div>
           <div class="service-num">03</div>
         </div>
         <div class="service-card reveal" data-photo="prodazha">
@@ -128,7 +128,7 @@
         <div class="service-card reveal" data-photo="zamer">
           <div class="service-icon"><i class="fa fa-ruler-combined"></i></div>
           <div class="service-name">Бесплатный замер</div>
-          <div class="service-desc">Приедем в удобное время, снимем размеры и назовём цену.</div>
+          <div class="service-desc">Приедем в удобное для вас время, снимем размеры и назовём цену.</div>
           <div class="service-num">05</div>
         </div>
       </div>
@@ -145,7 +145,7 @@
         <div class="adv-card adv-main reveal">
           <div class="adv-main-text">
             <div class="adv-main-title">Честная цена за настоящее качество</div>
-            <p>Вся цепочка у нас в одних руках: между вами и мастером нет перекупщиков, дилеров и посредников. Деньги идут в качество изделия и монтажа, а не в чужую наценку. Цену называем до начала работ — без накруток и скрытых платежей.</p>
+            <p>Вся цепочка у нас в одних руках: между вами и компанией нет сторонних перекупщиков, дилеров и посредников. Деньги идут в качество изделия и монтажа, а не в чужую наценку.</p>
             <a href="#calculator" class="btn-primary">Рассчитать стоимость <span class="arrow">→</span></a>
           </div>
           <div class="adv-chain" aria-label="Производство, доставка, монтаж">
@@ -164,14 +164,14 @@
 
         <div class="adv-card reveal" data-photo="dostavka">
           <div class="adv-icon"><i class="fa fa-truck-fast"></i></div>
-          <div class="adv-name">Своя доставка</div>
+          <div class="adv-name">Собственная служба доставки</div>
           <div class="adv-desc">Привозим окна на собственном транспорте в согласованное время. Вы не платите перевозчикам и не зависите от чужих графиков.</div>
           <div class="adv-benefit"><i class="fa fa-check"></i> Без наценки за логистику</div>
         </div>
 
         <div class="adv-card reveal" data-photo="montazhniki">
           <div class="adv-icon"><i class="fa fa-graduation-cap"></i></div>
-          <div class="adv-name">Обученные монтажники</div>
+          <div class="adv-name">Квалифицированные мастера монтажа</div>
           <div class="adv-desc">Каждые 3 месяца наши мастера проходят профессиональное обучение: новые материалы, технологии и стандарты монтажа.</div>
           <div class="adv-benefit"><i class="fa fa-check"></i> Меньше ошибок и переделок</div>
         </div>
@@ -230,6 +230,70 @@
     </div>
   </section>
 
+  <!-- Заявка на расчёт -->
+  <section id="quote">
+    <div class="section-inner quote-grid">
+      <div class="quote-info">
+        <h2 class="section-title reveal">Получите точный расчёт стоимости</h2>
+        <span class="quote-line reveal"></span>
+        <ol class="quote-steps">
+          <li class="quote-step reveal">
+            <span class="quote-num">1</span>
+            <p>Оставьте заявку: мы свяжемся с вами и согласуем удобное время для замера</p>
+          </li>
+          <li class="quote-step reveal">
+            <span class="quote-num">2</span>
+            <p>Вы получите точную фиксированную смету на остекление вашей квартиры бесплатно</p>
+          </li>
+          <li class="quote-step reveal">
+            <span class="quote-num">3</span>
+            <p>На объект повышенной сложности мы отправим старшего технолога со строительным образованием и опытом работы в нашей компании от 2-х лет</p>
+          </li>
+        </ol>
+
+        <!-- Пример сметы: положите файл в папку docs/ (имя можно поменять здесь) -->
+        <a class="btn-outline quote-sample reveal" href="docs/primer-smety.pdf" target="_blank" rel="noopener">
+          <i class="fa fa-file-lines"></i> Пример сметы
+        </a>
+
+        <div class="quote-guarantees">
+          <div class="quote-guarantee reveal">
+            <i class="fa fa-file-contract"></i>
+            <span>В смете чётко закрепляется стоимость всех работ и материалов</span>
+          </div>
+          <div class="quote-guarantee reveal">
+            <i class="fa fa-lock"></i>
+            <span>Смета не увеличивается в процессе работы</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="quote-card reveal">
+        <form class="form" id="quoteForm" novalidate>
+          <p class="title">Оставьте заявку</p>
+          <p class="message">Перезвоним и ответим на все вопросы</p>
+
+          <label>
+            <input class="input" type="text" id="quoteName" placeholder=" " autocomplete="name" required>
+            <span>Ваше имя</span>
+          </label>
+
+          <label>
+            <input class="input" type="tel" id="quotePhone" placeholder=" " autocomplete="tel" required>
+            <span>Ваш номер телефона</span>
+          </label>
+
+          <label class="consent">
+            <input type="checkbox" id="quoteConsent" required>
+            <span>Я даю согласие на обработку персональных данных и ознакомлен(а) с <a href="privacy.html" target="_blank" rel="noopener">Политикой конфиденциальности</a></span>
+          </label>
+
+          <button type="submit" class="submit">Получить расчёт</button>
+          <div class="form-notification-slot" id="quoteNotice"></div>
+        </form>
+      </div>
+    </div>
+  </section>
   
   <!-- Контакты -->
   <section id="contacts">

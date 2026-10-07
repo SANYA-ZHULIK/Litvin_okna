@@ -2074,8 +2074,17 @@ body.lightbox-open { overflow: hidden; }
 .lightbox.open { opacity: 1; visibility: visible; }
 
 /* свайп и листание: фото двигается, горизонтальные жесты забираем себе */
-.lightbox { overflow: hidden; touch-action: pan-y; }
-.lightbox-img { will-change: transform, opacity; user-select: none; -webkit-user-drag: none; }
+.lightbox { overflow: hidden; touch-action: none; } /* жесты (свайп, щипок) обрабатываем сами */
+.lightbox-img { will-change: transform, opacity, scale, translate; user-select: none; -webkit-user-drag: none; cursor: zoom-in; }
+.lightbox-img.zoomed { cursor: grab; }
+.lightbox-img.dragging { cursor: grabbing; }
+.lightbox-img.zoom-animate { transition: scale 0.28s ease, translate 0.28s ease, transform 0.26s cubic-bezier(0.4,0,0.2,1), opacity 0.26s ease !important; }
+
+/* пока фото увеличено, подпись и миниатюры не мешают */
+.lightbox-caption,
+.lightbox-thumbs { transition: opacity 0.25s; }
+.lightbox.is-zoomed .lightbox-caption,
+.lightbox.is-zoomed .lightbox-thumbs { opacity: 0; pointer-events: none; }
 
 .lightbox-img {
   grid-row: 2;
@@ -2103,6 +2112,7 @@ body.lightbox-open { overflow: hidden; }
 .lightbox-caption .work-meta { justify-content: center; }
 
 .lightbox-close,
+.lightbox-zoom,
 .lightbox-nav {
   position: absolute;
   width: 48px;
@@ -2120,9 +2130,11 @@ body.lightbox-open { overflow: hidden; }
 }
 
 .lightbox-close:hover,
+.lightbox-zoom:hover,
 .lightbox-nav:hover { background: rgba(255,255,255,0.28); }
 
 .lightbox-close { top: 20px; right: 20px; }
+.lightbox-zoom { top: 20px; right: 80px; }
 .lightbox-nav { top: 50%; transform: translateY(-50%); }
 .lightbox-prev { left: 20px; }
 .lightbox-next { right: 20px; }
@@ -2154,6 +2166,7 @@ body.lightbox-open { overflow: hidden; }
   scrollbar-width: none;
 }
 
+.lightbox-thumbs { touch-action: pan-x; }
 .lightbox-thumbs::-webkit-scrollbar { display: none; }
 .lightbox-thumbs:empty { display: none; }
 
@@ -2180,10 +2193,249 @@ body.lightbox-open { overflow: hidden; }
   .lightbox-img { max-height: calc(100vh - 220px); max-height: calc(100dvh - 220px); border-radius: 10px; }
   .lightbox-caption { padding: 0 44px; } /* не заходит под кнопки сверху */
   .lightbox-close { top: 12px; right: 12px; width: 42px; height: 42px; }
+  .lightbox-zoom { top: 12px; right: 62px; width: 42px; height: 42px; }
   .lightbox-counter { top: 18px; left: 12px; }
   .lightbox-nav { width: 40px; height: 40px; background: rgba(32,15,7,0.55); }
   .lightbox-prev { left: 8px; }
   .lightbox-next { right: 8px; }
   .lightbox-thumb { width: 60px; height: 44px; }
   .work-count { top: 12px; left: 12px; padding: 5px 10px; font-size: 0.75rem; }
+}
+
+/* ============================
+   УВЕДОМЛЕНИЕ О COOKIE
+   ============================ */
+.cookie-banner {
+  position: fixed;
+  left: 20px;
+  bottom: 20px;
+  z-index: 1500;
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  max-width: 560px;
+  padding: 18px 20px;
+  border-radius: 18px;
+  background: var(--primary-dark);
+  box-shadow: var(--shadow-md);
+  color: rgba(255,255,255,0.88);
+  font-size: 0.88rem;
+  line-height: 1.5;
+  opacity: 0;
+  transform: translateY(16px);
+  pointer-events: none;
+  transition: opacity 0.4s, transform 0.4s;
+}
+
+.cookie-banner.show { opacity: 1; transform: none; pointer-events: auto; }
+.cookie-banner p { margin: 0; }
+.cookie-banner a { color: var(--primary-light); text-decoration: underline; }
+
+.cookie-btn {
+  flex-shrink: 0;
+  padding: 11px 22px;
+  border: 0;
+  border-radius: 50px;
+  background: var(--primary-light);
+  color: var(--primary-dark);
+  font-family: 'Manrope', sans-serif;
+  font-weight: 700;
+  font-size: 0.9rem;
+  cursor: pointer;
+  transition: transform 0.25s, background 0.25s;
+}
+
+.cookie-btn:hover { background: var(--accent-light); transform: translateY(-1px); }
+
+@media (max-width: 560px) {
+  .cookie-banner {
+    left: 12px;
+    right: 12px;
+    bottom: 12px;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 12px;
+    padding: 16px;
+    font-size: 0.84rem;
+  }
+  .cookie-btn { width: 100%; }
+}
+
+/* ============================
+   ЗАЯВКА НА РАСЧЁТ (блок с шагами и формой)
+   ============================ */
+#quote { background: var(--white); }
+
+.quote-grid {
+  display: grid;
+  grid-template-columns: 1.1fr 0.9fr;
+  gap: clamp(32px, 6vw, 88px);
+  align-items: center;
+}
+
+#quote .section-title { margin-bottom: 20px; }
+
+.quote-line {
+  display: block;
+  width: 72px;
+  height: 4px;
+  border-radius: 4px;
+  background: var(--primary-light);
+}
+
+.quote-steps {
+  list-style: none;
+  margin: 40px 0 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.quote-step {
+  position: relative;
+  display: flex;
+  align-items: flex-start;
+  gap: 20px;
+  padding-bottom: 30px;
+}
+
+.quote-step:last-child { padding-bottom: 0; }
+
+/* пунктир между кружками */
+.quote-step:not(:last-child)::after {
+  content: '';
+  position: absolute;
+  left: 19px;
+  top: 48px;
+  bottom: 6px;
+  border-left: 2px dashed var(--primary-light);
+}
+
+.quote-num {
+  flex: 0 0 40px;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: var(--primary-light);
+  color: var(--primary-dark);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: 'Manrope', sans-serif;
+  font-weight: 800;
+  font-size: 1.05rem;
+}
+
+.quote-step p {
+  padding-top: 7px;
+  font-size: 1.05rem;
+  line-height: 1.55;
+  color: var(--gray-800);
+}
+
+.quote-card {
+  padding: 36px;
+  border-radius: 24px;
+  background: var(--primary-dark);
+  box-shadow: var(--shadow-md);
+}
+
+@media (max-width: 900px) {
+  .quote-grid { grid-template-columns: 1fr; gap: 0; }
+
+  /* левая колонка «растворяется», чтобы поставить гарантии под форму */
+  .quote-info { display: contents; }
+  .quote-info > .section-title { order: 1; }
+  .quote-line { order: 2; }
+  .quote-steps { order: 3; margin-top: 28px; }
+  .quote-sample { order: 4; width: 100%; margin-top: 8px; }
+  .quote-card { order: 5; margin-top: 28px; padding: 32px 30px; }
+  .quote-guarantees { order: 6; margin-top: 16px; }
+
+  .quote-step { gap: 16px; padding-bottom: 24px; }
+  .quote-num { flex-basis: 36px; width: 36px; height: 36px; font-size: 1rem; }
+  .quote-step:not(:last-child)::after { left: 17px; top: 44px; }
+  .quote-step p { font-size: 1rem; padding-top: 5px; }
+}
+
+@media (max-width: 560px) {
+  #quote { padding-top: 48px; padding-bottom: 48px; }
+  .quote-card { border-radius: 20px; padding: 28px; margin-top: 32px; }
+}
+
+/* гарантии под шагами: цена фиксируется и не растёт */
+.quote-guarantees {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 14px;
+  margin-top: 40px;
+}
+
+.quote-guarantee {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 16px 18px;
+  border-radius: 16px;
+  background: var(--cream);
+  border: 1px solid var(--gray-200);
+}
+
+.quote-guarantee i {
+  flex: 0 0 42px;
+  width: 42px;
+  height: 42px;
+  border-radius: 12px;
+  background: var(--primary-light);
+  color: var(--primary-dark);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.05rem;
+}
+
+.quote-guarantee span {
+  font-family: 'Manrope', sans-serif;
+  font-weight: 700;
+  font-size: 0.95rem;
+  line-height: 1.35;
+  color: var(--primary-dark);
+}
+
+@media (max-width: 560px) {
+  .quote-guarantees { grid-template-columns: 1fr; gap: 10px; margin-top: 14px; }
+  .quote-guarantee { padding: 14px 16px; }
+}
+
+/* кнопка-обводка (например, «Пример сметы») */
+.btn-outline {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 14px 26px;
+  border: 2px solid var(--primary-dark);
+  border-radius: 8px;
+  background: transparent;
+  color: var(--primary-dark);
+  font-family: 'Manrope', sans-serif;
+  font-weight: 700;
+  font-size: 0.95rem;
+  text-decoration: none;
+  cursor: pointer;
+  transition: background 0.3s, color 0.3s, transform 0.3s;
+}
+
+.btn-outline:hover {
+  background: var(--primary-dark);
+  color: var(--white);
+  transform: translateY(-2px);
+}
+
+.quote-sample { margin-top: 32px; }
+.quote-sample + .quote-guarantees { margin-top: 28px; }
+
+@media (max-width: 900px) {
+  .quote-sample { margin-top: 28px; }
+  .quote-sample + .quote-guarantees { margin-top: 16px; }
 }

@@ -519,7 +519,70 @@ document.addEventListener('DOMContentLoaded', function() {
     }
   });
 
-  // ---------- положение и анимация фото ----------
+  // ---------- приближение ----------
+  const MAX_ZOOM = 4;       // максимальное увеличение
+  const DOUBLE_ZOOM = 2.5;  // во сколько раз приближает двойной тап / клик / кнопка
+  const zoom = { s: 1, x: 0, y: 0 };
+  let zoomAnimTimer = null;
+  let lastTouchEnd = 0;     // чтобы не ловить «эхо» мыши после касания
+
+  // кнопка приближения рядом с крестиком
+  const zoomBtn = document.createElement('button');
+  zoomBtn.type = 'button';
+  zoomBtn.className = 'lightbox-zoom';
+  zoomBtn.setAttribute('aria-label', 'Приблизить');
+  zoomBtn.innerHTML = '<i class="fa fa-magnifying-glass-plus"></i>';
+  lb.appendChild(zoomBtn);
+
+  // не даём утащить фото за край экрана
+  function clampPan() {
+    const w = img.offsetWidth * zoom.s;
+    const h = img.offsetHeight * zoom.s;
+    const maxX = Math.max(0, (w - window.innerWidth) / 2);
+    const maxY = Math.max(0, (h - window.innerHeight) / 2);
+    zoom.x = Math.min(maxX, Math.max(-maxX, zoom.x));
+    zoom.y = Math.min(maxY, Math.max(-maxY, zoom.y));
+  }
+
+  function applyZoom(animate) {
+    if (zoom.s <= 1.001) { zoom.s = 1; zoom.x = 0; zoom.y = 0; } else { clampPan(); }
+    if (animate) {
+      img.classList.add('zoom-animate');
+      clearTimeout(zoomAnimTimer);
+      zoomAnimTimer = setTimeout(() => img.classList.remove('zoom-animate'), 300);
+    }
+    img.style.scale = zoom.s;
+    img.style.translate = zoom.x + 'px ' + zoom.y + 'px';
+    const zoomed = zoom.s > 1;
+    img.classList.toggle('zoomed', zoomed);
+    lb.classList.toggle('is-zoomed', zoomed);   // прячем подпись и миниатюры, пока фото увеличено
+    zoomBtn.innerHTML = '<i class="fa fa-magnifying-glass-' + (zoomed ? 'minus' : 'plus') + '"></i>';
+    zoomBtn.setAttribute('aria-label', zoomed ? 'Уменьшить' : 'Приблизить');
+  }
+
+  function resetZoom(animate) {
+    zoom.s = 1; zoom.x = 0; zoom.y = 0;
+    applyZoom(animate);
+  }
+
+  // приблизить так, чтобы точка (cx, cy) экрана осталась под пальцем или курсором
+  function zoomAt(scale, cx, cy, animate) {
+    const s0 = zoom.s;
+    const s1 = Math.min(MAX_ZOOM, Math.max(1, scale));
+    const px = cx - window.innerWidth / 2;
+    const py = cy - window.innerHeight / 2;
+    zoom.x = px - s1 * (px - zoom.x) / s0;
+    zoom.y = py - s1 * (py - zoom.y) / s0;
+    zoom.s = s1;
+    applyZoom(animate);
+  }
+
+  function toggleZoom(cx, cy) {
+    if (zoom.s > 1) resetZoom(true);
+    else zoomAt(DOUBLE_ZOOM, cx, cy, true);
+  }
+
+  // ---------- положение и анимация листания ----------
   function setImg(x, opacity, animate) {
     img.style.transition = animate
       ? 'transform 0.26s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.26s ease'
@@ -532,6 +595,7 @@ document.addEventListener('DOMContentLoaded', function() {
   function show(i) {
     if (!photos.length) return;
     current = wrap(i);
+    resetZoom(false);
     img.src = photos[current];
     const title = activeCard.querySelector('.work-title');
     img.alt = (title ? title.textContent : 'Фото работы') + ', фото ' + (current + 1);
@@ -615,6 +679,7 @@ document.addEventListener('DOMContentLoaded', function() {
     lb.setAttribute('aria-hidden', 'true');
     document.body.classList.remove('lightbox-open');
     animating = false;
+    resetZoom(false);
   }
 
   cards.forEach((card) => card.addEventListener('click', () => {
@@ -624,30 +689,108 @@ document.addEventListener('DOMContentLoaded', function() {
   btnClose.addEventListener('click', closeLb);
   btnPrev.addEventListener('click', (e) => { e.stopPropagation(); goPrev(); });
   btnNext.addEventListener('click', (e) => { e.stopPropagation(); goNext(); });
+  zoomBtn.addEventListener('click', (e) => {
+    e.stopPropagation();
+    toggleZoom(window.innerWidth / 2, window.innerHeight / 2);
+  });
   lb.addEventListener('click', (e) => { if (e.target === lb) closeLb(); });
 
   document.addEventListener('keydown', (e) => {
     if (!lb.classList.contains('open')) return;
+    const cx = window.innerWidth / 2, cy = window.innerHeight / 2;
     if (e.key === 'Escape') closeLb();
     if (e.key === 'ArrowLeft') goPrev();
     if (e.key === 'ArrowRight') goNext();
+    if (e.key === '+' || e.key === '=') zoomAt(zoom.s * 1.4, cx, cy, true);
+    if (e.key === '-' || e.key === '_') zoomAt(zoom.s / 1.4, cx, cy, true);
+    if (e.key === '0') resetZoom(true);
   });
 
-  // ---------- свайп: фото едет за пальцем ----------
-  let startX = null, startY = 0, dragX = 0, axis = null;
+  // ---------- компьютер: колесо мыши, клик и перетаскивание ----------
+  lb.addEventListener('wheel', (e) => {
+    if (!lb.classList.contains('open') || e.target.closest('.lightbox-thumbs')) return;
+    e.preventDefault();
+    zoomAt(zoom.s * Math.exp(-e.deltaY * 0.0018), e.clientX, e.clientY, false);
+  }, { passive: false });
+
+  let mouse = null;
+  img.addEventListener('mousedown', (e) => {
+    if (e.button !== 0 || Date.now() - lastTouchEnd < 600) return;
+    e.preventDefault();
+    mouse = { x: e.clientX, y: e.clientY, zx: zoom.x, zy: zoom.y, moved: false };
+    if (zoom.s > 1) img.classList.add('dragging');
+  });
+  window.addEventListener('mousemove', (e) => {
+    if (!mouse) return;
+    const dx = e.clientX - mouse.x;
+    const dy = e.clientY - mouse.y;
+    if (Math.abs(dx) > 4 || Math.abs(dy) > 4) mouse.moved = true;
+    if (zoom.s > 1 && mouse.moved) {
+      zoom.x = mouse.zx + dx;
+      zoom.y = mouse.zy + dy;
+      applyZoom(false);
+    }
+  });
+  window.addEventListener('mouseup', (e) => {
+    if (!mouse) return;
+    const wasClick = !mouse.moved;
+    mouse = null;
+    img.classList.remove('dragging');
+    if (wasClick && e.target === img && lb.classList.contains('open')) toggleZoom(e.clientX, e.clientY);
+  });
+
+  // ---------- телефон: свайп, щипок и двойной тап ----------
+  let startX = null, startY = 0, dragX = 0, axis = null;   // свайп (листание)
+  let panStart = null;                                      // перемещение увеличенного фото
+  let pinch = null;                                         // щипок двумя пальцами
+  let lastTap = { t: 0, x: 0, y: 0 };
+
+  const dist = (a, b) => Math.hypot(a.clientX - b.clientX, a.clientY - b.clientY);
+  const mid = (a, b) => ({ x: (a.clientX + b.clientX) / 2, y: (a.clientY + b.clientY) / 2 });
 
   lb.addEventListener('touchstart', (e) => {
     startX = null;
+    panStart = null;
+    // кнопки и полоску миниатюр не считаем жестами по фото
+    if (e.target.closest('.lightbox-thumbs, .lightbox-nav, .lightbox-close, .lightbox-zoom')) return;
+
+    if (e.touches.length === 2) {
+      const m = mid(e.touches[0], e.touches[1]);
+      pinch = { d: dist(e.touches[0], e.touches[1]), s: zoom.s, x: zoom.x, y: zoom.y, mx: m.x, my: m.y };
+      return;
+    }
     if (animating || e.touches.length > 1) return;
-    // полоску миниатюр и кнопки не считаем свайпом по фото
-    if (e.target.closest('.lightbox-thumbs, .lightbox-nav, .lightbox-close')) return;
-    startX = e.touches[0].clientX;
-    startY = e.touches[0].clientY;
-    dragX = 0;
-    axis = null;
+
+    const t = e.touches[0];
+    if (zoom.s > 1) {
+      panStart = { x: t.clientX, y: t.clientY, zx: zoom.x, zy: zoom.y, moved: false };
+    } else {
+      startX = t.clientX; startY = t.clientY; dragX = 0; axis = null;
+    }
   }, { passive: true });
 
   lb.addEventListener('touchmove', (e) => {
+    if (pinch && e.touches.length === 2) {
+      const m = mid(e.touches[0], e.touches[1]);
+      const s1 = Math.min(MAX_ZOOM, Math.max(1, pinch.s * dist(e.touches[0], e.touches[1]) / pinch.d));
+      const px = pinch.mx - window.innerWidth / 2;
+      const py = pinch.my - window.innerHeight / 2;
+      zoom.s = s1;
+      zoom.x = px - s1 * (px - pinch.x) / pinch.s + (m.x - pinch.mx);
+      zoom.y = py - s1 * (py - pinch.y) / pinch.s + (m.y - pinch.my);
+      applyZoom(false);
+      return;
+    }
+    if (panStart && e.touches.length === 1) {
+      const t = e.touches[0];
+      const dx = t.clientX - panStart.x;
+      const dy = t.clientY - panStart.y;
+      if (Math.abs(dx) > 4 || Math.abs(dy) > 4) panStart.moved = true;
+      zoom.x = panStart.zx + dx;
+      zoom.y = panStart.zy + dy;
+      applyZoom(false);
+      return;
+    }
     if (startX === null) return;
     const dx = e.touches[0].clientX - startX;
     const dy = e.touches[0].clientY - startY;
@@ -658,11 +801,42 @@ document.addEventListener('DOMContentLoaded', function() {
     setImg(dragX, fade, false);
   }, { passive: true });
 
-  function endSwipe() {
+  function handleTap(touch) {
+    const now = Date.now();
+    if (now - lastTap.t < 300 && Math.hypot(touch.clientX - lastTap.x, touch.clientY - lastTap.y) < 30) {
+      lastTap.t = 0;
+      toggleZoom(touch.clientX, touch.clientY);   // двойной тап: приблизить / вернуть
+    } else {
+      lastTap = { t: now, x: touch.clientX, y: touch.clientY };
+    }
+  }
+
+  function endTouch(e) {
+    lastTouchEnd = Date.now();
+
+    if (pinch) {
+      if (e.touches.length < 2) {
+        pinch = null;
+        if (zoom.s < 1.05) resetZoom(true);       // почти не приблизили: возвращаем как было
+      }
+      return;
+    }
+    if (panStart) {
+      const ps = panStart;
+      panStart = null;
+      if (!ps.moved && e.target === img) handleTap(e.changedTouches[0]);
+      return;
+    }
     if (startX === null) return;
-    const dx = dragX, wasHorizontal = axis === 'x';
+
+    const dx = dragX;
+    const wasHorizontal = axis === 'x';
+    const wasTap = axis === null;
     startX = null; axis = null; dragX = 0;
+
+    if (wasTap) { if (e.target === img) handleTap(e.changedTouches[0]); return; }
     if (!wasHorizontal) return;
+
     const threshold = Math.min(70, window.innerWidth * 0.18);
     if (photos.length > 1 && Math.abs(dx) > threshold) {
       slideTo(current + (dx < 0 ? 1 : -1), dx < 0 ? 1 : -1);
@@ -670,6 +844,99 @@ document.addEventListener('DOMContentLoaded', function() {
       setImg(0, 1, true);                         // не дотянули: возвращаем на место
     }
   }
-  lb.addEventListener('touchend', endSwipe);
-  lb.addEventListener('touchcancel', endSwipe);
+  lb.addEventListener('touchend', endTouch);
+  lb.addEventListener('touchcancel', endTouch);
+})();
+
+
+// ============================
+// УВЕДОМЛЕНИЕ О COOKIE
+// ============================
+(function () {
+  const KEY = 'cookieNoticeAccepted';
+  try { if (localStorage.getItem(KEY)) return; } catch (e) { /* без хранилища просто показываем */ }
+
+  const box = document.createElement('div');
+  box.className = 'cookie-banner';
+  box.setAttribute('role', 'region');
+  box.setAttribute('aria-label', 'Уведомление об использовании cookie');
+  box.innerHTML =
+    '<p>Мы используем файлы cookie и сторонние сервисы (карты, шрифты), чтобы сайт работал корректно. ' +
+    'Продолжая пользоваться сайтом, вы соглашаетесь с этим. ' +
+    '<a href="privacy.html">Подробнее в Политике конфиденциальности</a></p>' +
+    '<button type="button" class="cookie-btn">Принять</button>';
+  document.body.appendChild(box);
+
+  // показываем чуть позже, когда пропадёт лоудер
+  setTimeout(() => box.classList.add('show'), 1400);
+
+  box.querySelector('.cookie-btn').addEventListener('click', () => {
+    try { localStorage.setItem(KEY, '1'); } catch (e) {}
+    box.classList.remove('show');
+    setTimeout(() => box.remove(), 450);
+  });
+})();
+
+
+// ============================
+// БЛОК «ПОЛУЧИТЕ РАСЧЁТ»: быстрая форма на странице
+// ============================
+(function () {
+  const form = document.getElementById('quoteForm');
+  if (!form) return;
+
+  const slot = document.getElementById('quoteNotice');
+  let touchedAt = null;   // когда пользователь начал заполнять форму (для защиты от ботов на сервере)
+  form.addEventListener('focusin', () => { if (touchedAt === null) touchedAt = Date.now(); });
+
+  function notify(text, type) {
+    if (!slot) return;
+    slot.replaceChildren();
+    const box = document.createElement('div');
+    box.className = 'form-notification form-notification--' + type;
+    box.textContent = text;
+    slot.appendChild(box);
+    if (type === 'error') {
+      setTimeout(() => { if (box.parentNode) box.remove(); }, 6000);
+    }
+  }
+
+  form.addEventListener('submit', async (e) => {
+    e.preventDefault();
+
+    const name = document.getElementById('quoteName').value.trim();
+    const phone = document.getElementById('quotePhone').value.trim();
+    const consent = document.getElementById('quoteConsent').checked;
+
+    if (!name || !phone) return notify('Пожалуйста, укажите имя и телефон', 'error');
+    if (phone.replace(/\D/g, '').length < 10) return notify('Проверьте номер телефона', 'error');
+    if (!consent) return notify('Необходимо согласие на обработку персональных данных', 'error');
+
+    const btn = form.querySelector('button[type="submit"]');
+    setButtonLoading(btn, true);
+    try {
+      const result = await sendOrder({
+        name,
+        phone,
+        address: '',
+        message: 'Заявка из блока «Получите расчёт»',
+        consent,
+        website: '',
+        elapsed: touchedAt === null ? 0 : Date.now() - touchedAt
+      });
+      const ok = result === true || (result && result.ok === true);
+      if (ok) {
+        notify('Спасибо! Мы свяжемся с вами в ближайшее время.', 'success');
+        form.reset();
+        touchedAt = null;
+      } else {
+        notify('Не удалось отправить заявку. Позвоните по номеру +7 (915) 339-65-65', 'error');
+      }
+    } catch (err) {
+      console.error('Quote form error:', err);
+      notify('Произошла ошибка. Позвоните по номеру +7 (915) 339-65-65', 'error');
+    } finally {
+      setButtonLoading(btn, false);
+    }
+  });
 })();
