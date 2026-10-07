@@ -161,7 +161,7 @@ body.modal-open {
 .hero-overlay {
   position: absolute;
   inset: 0;
-  background: linear-gradient(135deg, rgba(0,0,0,0.55) 0%, rgba(0,0,0,0.4) 100%);
+  background: linear-gradient(135deg, rgba(0,0,0,0.65) 0%, rgba(0,0,0,0.5) 100%);
 }
 
 .hero-content {
@@ -800,6 +800,112 @@ section {
 
 @media (max-width: 560px) {
   .reviews-grid { grid-template-columns: 1fr; }
+}
+
+/* ============================
+   СПОСОБЫ ОПЛАТЫ
+   ============================ */
+#payment {
+  background: var(--white);
+}
+
+.payment-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 18px;
+  margin-top: 40px;
+}
+
+.payment-card {
+  position: relative;
+  overflow: hidden;
+  padding: 28px;
+  border: 1px solid var(--gray-100);
+  border-radius: 24px;
+  background: var(--cream);
+  box-shadow: var(--shadow-sm);
+  transition: transform .35s ease, box-shadow .35s ease, border-color .35s ease;
+
+  /* вертикальное выравнивание содержимого по центру */
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  min-height: 190px;
+}
+
+.payment-card::after {
+  content: '';
+  position: absolute;
+  width: 120px;
+  height: 120px;
+  right: -48px;
+  bottom: -58px;
+  border-radius: 50%;
+  background: rgba(197,227,132,.18);
+  pointer-events: none;
+}
+
+@media (hover: hover) {
+  .payment-card:hover {
+    transform: translateY(-5px);
+    box-shadow: var(--shadow-md);
+    border-color: var(--gray-200);
+  }
+}
+
+.payment-card-top {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end; /* иконка справа */
+  margin-bottom: 20px;
+}
+
+/* номер — в левый верхний угол карточки */
+.payment-num {
+  position: absolute;
+  top: 0;
+  left: 0;
+  font-family: 'Manrope', sans-serif;
+  font-size: .78rem;
+  font-weight: 800;
+  letter-spacing: .08em;
+  color: var(--gray-600);
+  line-height: 1;
+}
+
+.payment-icon {
+  width: 54px;
+  height: 54px;
+  border-radius: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--primary-light);
+  color: var(--primary-dark);
+  font-size: 1.2rem;
+}
+
+.payment-card h3 {
+  margin: 0;
+  font-family: 'Manrope', sans-serif;
+  font-size: 1.15rem;
+  font-weight: 800;
+  color: var(--primary-dark);
+}
+
+@media (max-width: 900px) {
+  .payment-grid { grid-template-columns: 1fr; gap: 12px; }
+  .payment-card { min-height: 0; }
+}
+
+@media (max-width: 560px) {
+  .payment-grid { margin-top: 28px; }
+  .payment-card { padding: 22px; border-radius: 20px; }
+  .payment-card-top { margin-bottom: 18px; }
+  .payment-icon { width: 48px; height: 48px; border-radius: 14px; }
+  .payment-card h3 { font-size: 1.05rem; }
 }
 
 /* ============================
@@ -2294,7 +2400,7 @@ body.lightbox-open { overflow: hidden; }
 .quote-step {
   position: relative;
   display: flex;
-  align-items: flex-start;
+  align-items: center;
   gap: 20px;
   padding-bottom: 30px;
 }
@@ -2327,7 +2433,7 @@ body.lightbox-open { overflow: hidden; }
 }
 
 .quote-step p {
-  padding-top: 7px;
+  padding-top: 0;
   font-size: 1.05rem;
   line-height: 1.55;
   color: var(--gray-800);
@@ -2355,7 +2461,7 @@ body.lightbox-open { overflow: hidden; }
   .quote-step { gap: 16px; padding-bottom: 24px; }
   .quote-num { flex-basis: 36px; width: 36px; height: 36px; font-size: 1rem; }
   .quote-step:not(:last-child)::after { left: 17px; top: 44px; }
-  .quote-step p { font-size: 1rem; padding-top: 5px; }
+  .quote-step p { font-size: 1rem; padding-top: 0; }
 }
 
 @media (max-width: 560px) {
@@ -2426,10 +2532,20 @@ body.lightbox-open { overflow: hidden; }
   transition: background 0.3s, color 0.3s, transform 0.3s;
 }
 
-.btn-outline:hover {
+.btn-outline { -webkit-tap-highlight-color: transparent; }
+
+/* наведение только там, где есть мышь; на телефоне закрашивается лишь на время нажатия */
+@media (hover: hover) {
+  .btn-outline:hover {
+    background: var(--primary-dark);
+    color: var(--white);
+    transform: translateY(-2px);
+  }
+}
+
+.btn-outline:active {
   background: var(--primary-dark);
   color: var(--white);
-  transform: translateY(-2px);
 }
 
 .quote-sample { margin-top: 32px; }
@@ -2438,4 +2554,137 @@ body.lightbox-open { overflow: hidden; }
 @media (max-width: 900px) {
   .quote-sample { margin-top: 28px; }
   .quote-sample + .quote-guarantees { margin-top: 16px; }
+}
+
+/* ============================
+   ДОГОВОР: сроки, стоимость, гарантии
+   ============================ */
+#contract { background: #f7f6f2; }
+
+.contract-lead {
+  max-width: 640px;
+  margin-top: 14px;
+  font-size: 1.05rem;
+  line-height: 1.6;
+  color: var(--gray-600);
+}
+
+/* Основной список — в том же стиле, что и шаги в «Получите точный расчёт стоимости» */
+.contract-info {
+  max-width: 760px;
+  margin-top: 40px;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.contract-point {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  padding-bottom: 30px;
+}
+
+.contract-point:last-child { padding-bottom: 0; }
+
+/* пунктирная линия между номерами — как в quote-step */
+.contract-point:not(:last-child)::after {
+  content: '';
+  position: absolute;
+  left: 19px;
+  top: 48px;
+  bottom: 6px;
+  border-left: 2px dashed var(--primary-light);
+}
+
+.contract-num {
+  flex: 0 0 40px;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: var(--primary-light);
+  color: var(--primary-dark);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: 'Manrope', sans-serif;
+  font-weight: 800;
+  font-size: 1.05rem;
+}
+
+.contract-point p {
+  margin: 0;
+  padding-top: 0;
+  font-size: 1.05rem;
+  line-height: 1.55;
+  color: var(--gray-800);
+}
+
+/* Гарантии — просто аккуратный список без карточки и рамки */
+.contract-list {
+  list-style: none;
+  margin: 34px 0 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.contract-list li {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-family: 'Manrope', sans-serif;
+  font-weight: 700;
+  font-size: 0.95rem;
+  line-height: 1.45;
+  color: var(--primary-dark);
+}
+
+.contract-bullet {
+  flex: 0 0 8px;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--primary-light);
+}
+
+@media (max-width: 900px) {
+  .contract-info { margin-top: 30px; }
+  .contract-point { gap: 16px; padding-bottom: 24px; }
+  .contract-num { flex-basis: 36px; width: 36px; height: 36px; font-size: 1rem; }
+  .contract-point:not(:last-child)::after { left: 17px; top: 44px; }
+  .contract-point p { font-size: 1rem; padding-top: 0; }
+  .contract-list { margin-top: 28px; }
+}
+
+@media (max-width: 560px) {
+  #contract {
+    padding-top: 48px;
+    padding-bottom: 48px;
+  }
+
+  .contract-lead { font-size: 0.98rem; }
+  .contract-info { margin-top: 28px; }
+  .contract-point { gap: 14px; padding-bottom: 22px; }
+  .contract-num { flex-basis: 34px; width: 34px; height: 34px; font-size: 0.9rem; }
+  .contract-point:not(:last-child)::after { left: 16px; top: 42px; bottom: 5px; }
+  .contract-point p { font-size: 0.93rem; line-height: 1.55; padding-top: 0; }
+  .contract-list { margin-top: 24px; gap: 10px; }
+  .contract-list li { font-size: 0.9rem; }
+}
+
+/* ============================
+   СТРАНИЦА КАЛЬКУЛЯТОРА
+   ============================ */
+
+.standalone-main #calculator {
+  min-height: calc(100vh - 78px);
+  padding-top: 64px;
+  padding-bottom: 64px;
+}
+
+@media (max-width: 900px) {
+  .standalone-main #calculator { min-height: 0; display: block; padding-top: 54px; padding-bottom: 54px; }
 }

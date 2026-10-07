@@ -50,10 +50,11 @@
   <div class="menu-overlay" id="menuOverlay"></div>
   <div class="mobile-menu" id="mobileMenu">
     <a href="index.html">Главная</a>
-    <a href="#calculator">Калькулятор</a>
     <a href="portfolio.html">Работы</a>
     <a href="reviews.html">Отзывы</a>
     <a href="faq.html">Вопросы</a>
+    <a href="calculator.html">Калькулятор</a>
+    <a href="#payment">Оплата</a>
     <a href="#contacts">Контакты</a>
     <button class="nav-cta mobile-cta" onclick="openLeadModal()">Бесплатный замер</button>
   </div>
@@ -67,10 +68,11 @@
       
       <nav class="nav-links">
         <a href="index.html">Главная</a>
-        <a href="#calculator">Цены</a>
         <a href="portfolio.html">Работы</a>
         <a href="reviews.html">Отзывы</a>
         <a href="faq.html">Вопросы</a>
+        <a href="calculator.html">Калькулятор</a>
+        <a href="#payment">Оплата</a>
         <a href="#contacts">Контакты</a>
       </nav>
       
@@ -88,7 +90,7 @@
         <p>Приедем, снимем замеры и честно назовём цену — без накруток и скрытых платежей. Работаем по Москве и области.</p>
         <div class="hero-btns">
           <button class="btn-primary" onclick="openLeadModal()">Вызвать мастера <span class="arrow">→</span></button>
-          <a href="#calculator" class="btn-secondary"><i class="fa fa-calculator"></i> Рассчитать цену</a>
+          <a href="calculator.html" class="btn-secondary"><i class="fa fa-calculator"></i> Рассчитать цену</a>
         </div>
       </div>
     </div>
@@ -146,7 +148,7 @@
           <div class="adv-main-text">
             <div class="adv-main-title">Честная цена за настоящее качество</div>
             <p>Вся цепочка у нас в одних руках: между вами и компанией нет сторонних перекупщиков, дилеров и посредников. Деньги идут в качество изделия и монтажа, а не в чужую наценку.</p>
-            <a href="#calculator" class="btn-primary">Рассчитать стоимость <span class="arrow">→</span></a>
+            <a href="calculator.html" class="btn-primary">Рассчитать стоимость <span class="arrow">→</span></a>
           </div>
           <div class="adv-chain" aria-label="Производство, доставка, монтаж">
             <div class="adv-step"><i class="fa fa-industry"></i><span>Производство</span></div>
@@ -174,57 +176,6 @@
           <div class="adv-name">Квалифицированные мастера монтажа</div>
           <div class="adv-desc">Каждые 3 месяца наши мастера проходят профессиональное обучение: новые материалы, технологии и стандарты монтажа.</div>
           <div class="adv-benefit"><i class="fa fa-check"></i> Меньше ошибок и переделок</div>
-        </div>
-      </div>
-    </div>
-  </section>
-
-  <!-- Калькулятор -->
-  <section id="calculator">
-    <div class="section-inner">
-      <h2 class="section-title reveal">Примерная стоимость окна</h2>
-      <div class="calc-wrapper">
-        <div class="calc-form">
-          <div class="calc-group">
-            <label class="calc-label">Ширина окна</label>
-            <input type="range" class="calc-range" id="rangeW" min="60" max="200" value="120" step="5" />
-            <span class="range-val"><span id="valW">120</span> см</span>
-          </div>
-          <div class="calc-group">
-            <label class="calc-label">Высота окна</label>
-            <input type="range" class="calc-range" id="rangeH" min="60" max="200" value="140" step="5" />
-            <span class="range-val"><span id="valH">140</span> см</span>
-          </div>
-          <div class="calc-group">
-            <label class="calc-label">Тип открывания</label>
-            <div class="toggle-group" id="openType">
-              <button class="toggle-btn active" data-val="1" onclick="setToggle('openType', this)">Глухое</button>
-              <button class="toggle-btn" data-val="1.15" onclick="setToggle('openType', this)">Поворотное</button>
-              <button class="toggle-btn" data-val="1.25" onclick="setToggle('openType', this)">Поворотно-откидное</button>
-            </div>
-          </div>
-          <div class="calc-group">
-            <label class="calc-label">Стеклопакет</label>
-            <div class="toggle-group" id="glassType">
-              <button class="toggle-btn active" data-val="1" onclick="setToggle('glassType', this)">Однокамерный</button>
-              <button class="toggle-btn" data-val="1.2" onclick="setToggle('glassType', this)">Двухкамерный</button>
-              <button class="toggle-btn" data-val="1.4" onclick="setToggle('glassType', this)">Энергосберегающий</button>
-            </div>
-          </div>
-          <div class="calc-group">
-            <label class="calc-label">Монтаж</label>
-            <div class="toggle-group" id="mountType">
-              <button class="toggle-btn" data-val="0" onclick="setToggle('mountType', this)">Только окно</button>
-              <button class="toggle-btn active" data-val="1" onclick="setToggle('mountType', this)">С монтажом</button>
-            </div>
-          </div>
-        </div>
-        <div class="calc-result">
-          <div class="calc-total">
-            <div class="calc-result-label">Ориентировочная стоимость</div>
-            <div class="calc-price" id="calcPrice">18 400 <span>₽</span></div>
-          </div>
-          <button class="btn-amber" onclick="openLeadModal()">Получить точный расчёт →</button>
         </div>
       </div>
     </div>
@@ -294,7 +245,69 @@
       </div>
     </div>
   </section>
+  <!-- Договор -->
+  <section id="contract">
+    <div class="section-inner">
+      <h2 class="section-title reveal">Договор, с которым вы будете спокойны</h2>
+      <p class="contract-lead reveal">Всё, что мы обещаем, закреплено на бумаге: вы заранее знаете, что, когда и за сколько будет сделано.</p>
+
+      <div class="contract-info">
+        <div class="contract-point reveal">
+          <span class="contract-num">1</span>
+          <p>Сроки изготовления и монтажа фиксируются в договоре. Мастер приезжает в согласованное время.</p>
+        </div>
+        <div class="contract-point reveal">
+          <span class="contract-num">2</span>
+          <p>Цена называется до начала работ, закрепляется в договоре и не растет в процессе.</p>
+        </div>
+        <div class="contract-point reveal">
+          <span class="contract-num">3</span>
+          <p>Гарантия 5 лет на окна и монтаж. Если появятся проблемы, приедем и устраним.</p>
+        </div>
+      </div>
+
+      <ul class="contract-list reveal">
+        <li><span class="contract-bullet"></span><span>Гарантия 5 лет на изделие</span></li>
+        <li><span class="contract-bullet"></span><span>Гарантия 5 лет на монтаж изделия</span></li>
+      </ul>
+    </div>
+  </section>
   
+  <!-- Способы оплаты -->
+  <section id="payment">
+    <div class="section-inner">
+      <h2 class="section-title reveal">Способы оплаты</h2>
+            <div class="payment-grid">
+        <article class="payment-card reveal">
+          <div class="payment-card-top">
+            <span class="payment-num">01</span>
+            <div class="payment-icon"><i class="fa fa-money-bill-wave"></i></div>
+          </div>
+          <h3>Наличный расчет</h3>
+          
+        </article>
+
+        <article class="payment-card reveal">
+          <div class="payment-card-top">
+            <span class="payment-num">02</span>
+            <div class="payment-icon"><i class="fa fa-credit-card"></i></div>
+          </div>
+          <h3>Банковской картой</h3>
+          
+        </article>
+
+        <article class="payment-card reveal">
+          <div class="payment-card-top">
+            <span class="payment-num">03</span>
+            <div class="payment-icon"><i class="fa fa-building-columns"></i></div>
+          </div>
+          <h3>Перевод на расчетный счет</h3>
+          
+        </article>
+      </div>
+    </div>
+  </section>
+
   <!-- Контакты -->
   <section id="contacts">
     <div class="section-inner">
