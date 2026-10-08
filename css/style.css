@@ -151,7 +151,7 @@ body.modal-open {
 #hero {
   min-height: 100vh;
   position: relative;
-  background: url('../images/back_mb.png') center center / cover no-repeat, #200f07;
+  background: url('../images/back.jpg') center center / cover no-repeat, #200f07;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -161,7 +161,7 @@ body.modal-open {
 /* на мобильных — другое фото */
 @media (max-width: 900px) {
   #hero {
-    background-image: url('../images/back_m.png');
+    background-image: url('../images/back_mobile.jpg');
   }
 }
 .hero-overlay {
