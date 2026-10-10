@@ -2694,3 +2694,174 @@ body.lightbox-open { overflow: hidden; }
 @media (max-width: 900px) {
   .standalone-main #calculator { min-height: 0; display: block; padding-top: 54px; padding-bottom: 54px; }
 }
+
+/* ============================
+   ПУНКТИР МЕЖДУ ПУНКТАМИ («Получите расчёт» и «Договор»)
+   Кружок всегда у верха пункта, поэтому линия идёт ровно от кружка до кружка
+   при любой длине текста. Короткий текст по-прежнему центрируется по кружку.
+   ============================ */
+.quote-step,
+.contract-point { align-items: flex-start; }
+
+.quote-step p,
+.contract-point p {
+  min-height: 40px;            /* высота кружка */
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+.quote-step:not(:last-child)::after,
+.contract-point:not(:last-child)::after {
+  top: 46px;                   /* 40px кружок + зазор 6px */
+  bottom: 6px;                 /* зазор до следующего кружка */
+}
+
+@media (max-width: 900px) {
+  .quote-step p,
+  .contract-point p { min-height: 36px; }
+
+  .quote-step:not(:last-child)::after,
+  .contract-point:not(:last-child)::after { top: 42px; }
+}
+
+@media (max-width: 560px) {
+  .contract-point p { min-height: 34px; }
+  .contract-point:not(:last-child)::after { top: 40px; bottom: 6px; }
+}
+
+/* ============================
+   ДОГОВОР — широкая градиентная композиция с фотографией
+   ============================ */
+#contract {
+  position: relative;
+  overflow: hidden;
+  isolation: isolate;
+  padding: clamp(64px, 7vw, 104px) 0;
+  background: linear-gradient(105deg, #f7f6f2 0%, #f7f6f2 43%, #eef2df 62%, #dcebb9 100%);
+}
+.contract-layout {
+  width: min(1240px, calc(100% - 64px));
+  margin: 0 auto;
+  display: grid;
+  grid-template-columns: minmax(0, 1.03fr) minmax(360px, .97fr);
+  align-items: center;
+  gap: clamp(32px, 5vw, 76px);
+}
+.contract-content { min-width: 0; position: relative; z-index: 2; }
+#contract .section-title { max-width: 620px; }
+.contract-lead { max-width: 590px; }
+.contract-info { max-width: 690px; margin-top: 34px; }
+.contract-point { gap: 17px; padding-bottom: 24px; }
+.contract-point p { font-size: 1rem; }
+.contract-point:not(:last-child)::after { left: 19px; top: 46px; bottom: 3px; }
+.contract-list { margin-top: 26px; gap: 10px; }
+.contract-visual {
+  position: relative;
+  min-height: 560px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  isolation: isolate;
+}
+.contract-visual::before {
+  content: '';
+  position: absolute;
+  z-index: -2;
+  inset: -90px -100vw -90px -55px;
+  background: linear-gradient(135deg, rgba(220,235,185,.08), rgba(197,227,132,.48) 62%, rgba(197,227,132,.72));
+  border-radius: 46% 0 0 46%;
+}
+.contract-visual-glow {
+  position: absolute;
+  z-index: -1;
+  width: min(88%, 490px);
+  aspect-ratio: 1;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(255,255,255,.85) 0%, rgba(255,255,255,.36) 48%, rgba(255,255,255,0) 72%);
+  filter: blur(4px);
+}
+.contract-document {
+  display: block;
+  width: min(88%, 470px);
+  max-height: 510px;
+  object-fit: contain;
+  border-radius: 18px;
+  filter: drop-shadow(0 28px 38px rgba(32,15,7,.18));
+  transform: rotate(2deg);
+  transition: transform .45s ease, filter .45s ease;
+}
+@media (hover: hover) {
+  .contract-visual:hover .contract-document { transform: rotate(0deg) translateY(-5px); filter: drop-shadow(0 34px 42px rgba(32,15,7,.22)); }
+}
+.contract-stamp {
+  position: absolute;
+  top: 11%;
+  right: 1%;
+  width: 112px;
+  height: 112px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  border: 1px solid rgba(32,15,7,.16);
+  border-radius: 50%;
+  color: var(--primary-dark, #200f07);
+  background: rgba(255,255,255,.76);
+  box-shadow: 0 12px 30px rgba(32,15,7,.08);
+  backdrop-filter: blur(10px);
+  font: 800 .65rem/1.2 'Manrope', sans-serif;
+  letter-spacing: .09em;
+  text-align: center;
+  transform: rotate(9deg);
+}
+.contract-stamp-check { font-size: 1.5rem; line-height: 1; color: #638b2f; }
+.contract-note {
+  position: absolute;
+  left: -3%;
+  bottom: 9%;
+  display: flex;
+  align-items: center;
+  gap: 13px;
+  max-width: 290px;
+  padding: 16px 20px;
+  border: 1px solid rgba(255,255,255,.75);
+  border-radius: 16px;
+  background: rgba(255,255,255,.82);
+  box-shadow: 0 16px 40px rgba(32,15,7,.10);
+  backdrop-filter: blur(14px);
+}
+.contract-note-mark {
+  display: flex; flex: 0 0 34px; width: 34px; height: 34px;
+  align-items: center; justify-content: center; border-radius: 50%;
+  background: #dff0bd; color: #385a1c; font-size: 1.1rem; font-weight: 800;
+}
+.contract-note strong { display: block; color: #200f07; font: 800 .88rem/1.3 'Manrope', sans-serif; }
+.contract-note small { display: block; margin-top: 4px; color: #655c53; font-size: .76rem; line-height: 1.4; }
+@media (max-width: 900px) {
+  #contract { padding: 58px 0; }
+  .contract-layout { width: min(100% - 48px, 720px); grid-template-columns: 1fr; gap: 20px; }
+  .contract-visual { min-height: 390px; margin: 0 -24px; }
+  .contract-visual::before { inset: -25px -30px -25px -30px; border-radius: 36% 36% 0 0; background: linear-gradient(180deg, rgba(220,235,185,.12), rgba(197,227,132,.64)); }
+  .contract-document { width: min(72%, 370px); max-height: 390px; }
+  .contract-stamp { top: 7%; right: 13%; width: 88px; height: 88px; font-size: .55rem; }
+  .contract-note { left: 8%; bottom: 5%; }
+}
+@media (max-width: 560px) {
+  #contract { padding: 48px 0 28px; }
+  .contract-layout { width: calc(100% - 40px); gap: 12px; }
+  .contract-info { margin-top: 28px; }
+  .contract-point { gap: 14px; padding-bottom: 22px; }
+  .contract-point p { font-size: .93rem; }
+  .contract-list { margin-top: 24px; }
+  .contract-visual { min-height: 320px; margin: 0 -20px; }
+  .contract-document { width: min(76%, 300px); max-height: 320px; }
+  .contract-stamp { right: 8%; top: 5%; width: 74px; height: 74px; font-size: .48rem; }
+  .contract-stamp-check { font-size: 1.15rem; }
+  .contract-note { left: 5%; bottom: 3%; gap: 9px; padding: 12px 14px; max-width: 255px; }
+  .contract-note-mark { flex-basis: 29px; width: 29px; height: 29px; font-size: 1rem; }
+  .contract-note strong { font-size: .78rem; }
+  .contract-note small { font-size: .68rem; }
+}
+@media (prefers-reduced-motion: reduce) { .contract-document { transition: none; } }
