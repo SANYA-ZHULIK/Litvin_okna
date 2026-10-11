@@ -198,6 +198,8 @@ const formNotificationSlot = document.getElementById('formNotificationSlot');
 
 window.openLeadModal = function() {
   if (!leadModalOverlay) return;
+  // если форму открыли из бокового меню, закрываем меню: иначе его затемнение остаётся под формой
+  if (typeof closeMenu === 'function' && mobileMenu) closeMenu();
   leadModalOverlay.classList.add('open');
   document.body.classList.add('modal-open');
   // фокус на первое поле
